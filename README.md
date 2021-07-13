@@ -27,6 +27,7 @@ Specify input path with `--inp`. Glob pattern for a batch of files is avaiable.
 The results are stored into `--out` directory with the same filename with extention set ot `.depth.png` and `.layout.txt`.
 
 Example for depth:
+
 ```
 python infer_depth.py --cfg config/mp3d_depth/HOHO_depth_dct_efficienthc_TransEn1_hardnet.yaml --pth ckpt/mp3d_depth_HOHO_depth_dct_efficienthc_TransEn1_hardnet/ep60.pth --out assets/ --inp assets/pano_asmasuxybohhcj.png
 ```

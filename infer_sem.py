@@ -48,7 +48,7 @@ if __name__ == '__main__':
     config.freeze()
 
     device = 'cuda' if config.cuda else 'cpu'
-
+    device = 'cpu'
     # Parse input paths
     rgb_lst = glob.glob(args.inp)
     if len(rgb_lst) == 0:

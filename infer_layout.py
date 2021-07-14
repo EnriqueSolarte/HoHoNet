@@ -23,7 +23,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     update_config(config, args)
     device = 'cuda' if config.cuda else 'cpu'
-
+    device = 'cpu'
     # Parse input paths
     rgb_lst = glob.glob(args.inp)
     if len(rgb_lst) == 0:
@@ -43,8 +43,9 @@ if __name__ == '__main__':
             rgb = imread(path)
             x = torch.from_numpy(rgb).permute(2,0,1)[None].float() / 255.
             x = x.to(device)
+            ts = time.time()
             cor_id = net.infer(x)['cor_id']
-
+            print(f'Eps time: {time.time() - ts:.2f} sec.')
             fname = os.path.splitext(os.path.split(path)[1])[0]
             with open(os.path.join(args.out, f'{fname}.layout.txt'), 'w') as f:
                 for u, v in cor_id:

@@ -14,7 +14,14 @@ class PanoCorBonDataset(data.Dataset):
     def __init__(self, root_dir,
                  flip=False, rotate=False, gamma=False, stretch=False,
                  max_stretch=1.5):
-        self.img_dir = os.path.join(root_dir, 'img')
+        # if flag == 'train':
+        #     self.img_dir = os.path.join(root_dir, 'train', 'rgb')
+        #     self.cor_dir = os.path.join(root_dir, 'label_cor_txt')
+        # elif flag == 'valid':
+        #     self.img_dir = os.path.join(root_dir, 'valid', 'rgb')
+        #     self.cor_dir = os.path.join(root_dir, 'label_cor_txt')
+        # else:
+        self.img_dir = os.path.join(root_dir, 'rgb')
         self.cor_dir = os.path.join(root_dir, 'label_cor')
         self.img_fnames = sorted([
             fname for fname in os.listdir(self.img_dir)

@@ -5,13 +5,15 @@ num_workers: 8
 dataset:
     name: PanoCorBonDataset
     train_kwargs:
-        root_dir: data/mp3d_layout/train_no_occ
+        # flag: train
+        root_dir: /media/public_dataset/layoutnet_dataset/layoutnet_dataset/train
         flip: True
         rotate: True
         gamma: True
         stretch: True
     valid_kwargs:
-        root_dir: data/mp3d_layout/valid_no_occ
+        # flag: valid
+        root_dir: /media/public_dataset/layoutnet_dataset/layoutnet_dataset/val
 
 training:
     epoch: 300

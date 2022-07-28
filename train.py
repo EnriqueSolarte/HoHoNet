@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
     # Parse args & config
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--cfg', required=True)
+    parser.add_argument('--cfg', default="/media/NFS/kike/HoHoNet/config/mp3d_layout/HOHO_layout_aug_efficienthc_Transen1_resnet34.yaml")
     parser.add_argument('opts',
                         help='Modify config options using the command-line',
                         default=None, nargs=argparse.REMAINDER)
@@ -119,7 +119,7 @@ if __name__ == '__main__':
     if config.cuda and config.cuda_benchmark:
         torch.backends.cudnn.benchmark = True
 
-    # Init dataset
+    # Init dataset5
     DatasetClass = getattr(dataset, config.dataset.name)
     config.dataset.train_kwargs.update(config.dataset.common_kwargs)
     config.dataset.valid_kwargs.update(config.dataset.common_kwargs)

@@ -1,25 +1,25 @@
 ckpt_root: ckpt
 cuda: True
-gpu: 0
+gpu: 1
 num_workers: 8
 
 dataset:
     name: PanoCorBonDataset
     train_kwargs:
         flag: train
-        root_dir: /media/public_dataset/layoutnet_dataset/layoutnet_dataset/train
+        root_dir: /media/public_dataset/360Layout/mp3d
         flip: True
         rotate: True
         gamma: True
         stretch: True
     valid_kwargs:
         flag: valid
-        root_dir: /media/public_dataset/layoutnet_dataset/layoutnet_dataset/val
+        root_dir: /media/public_dataset/360Layout/mp3d
 
 training:
     epoch: 300
     batch_size: 4
-    save_every: 1
+    save_every: 10
     optim_lr: 0.0001
     optim_poly_gamma: 0.9
 

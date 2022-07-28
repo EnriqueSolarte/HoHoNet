@@ -5,6 +5,7 @@ config = CN()
 
 config.ckpt_root = 'ckpt'
 config.cuda = True
+config.gpu = 0
 config.cuda_benchmark = True
 config.num_workers = 8
 

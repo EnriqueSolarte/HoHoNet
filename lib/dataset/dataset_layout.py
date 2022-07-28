@@ -9,20 +9,25 @@ import torch.utils.data as data
 from lib.misc import panostretch
 
 
+class MLCDataset(data.Dataset):
+    def __init__(self) -> None:
+        pass
+
+
 class PanoCorBonDataset(data.Dataset):
 
-    def __init__(self, root_dir,
+    def __init__(self, root_dir, flag,
                  flip=False, rotate=False, gamma=False, stretch=False,
                  max_stretch=1.5):
-        # if flag == 'train':
-        #     self.img_dir = os.path.join(root_dir, 'train', 'rgb')
-        #     self.cor_dir = os.path.join(root_dir, 'label_cor_txt')
-        # elif flag == 'valid':
-        #     self.img_dir = os.path.join(root_dir, 'valid', 'rgb')
-        #     self.cor_dir = os.path.join(root_dir, 'label_cor_txt')
-        # else:
-        self.img_dir = os.path.join(root_dir, 'rgb')
-        self.cor_dir = os.path.join(root_dir, 'label_cor')
+        if flag == 'train':
+            self.img_dir = os.path.join(root_dir, 'train', 'rgb')
+            self.cor_dir = os.path.join(root_dir, 'label_cor_txt')
+        elif flag == 'valid':
+            self.img_dir = os.path.join(root_dir, 'valid', 'rgb')
+            self.cor_dir = os.path.join(root_dir, 'label_cor_txt')
+        else:
+            self.img_dir = os.path.join(root_dir, 'rgb')
+            self.cor_dir = os.path.join(root_dir, 'label_cor')
         self.img_fnames = sorted([
             fname for fname in os.listdir(self.img_dir)
             if fname.endswith('.jpg') or fname.endswith('.png')
@@ -34,7 +39,7 @@ class PanoCorBonDataset(data.Dataset):
         self.stretch = stretch
         self.max_stretch = max_stretch
 
-        self._check_dataset()
+        # self._check_dataset()
 
     def _check_dataset(self):
         for fname in self.txt_fnames:
@@ -42,10 +47,14 @@ class PanoCorBonDataset(data.Dataset):
             assert os.path.isfile(gt_path),\
                 '%s not found' % gt_path
             cor = np.loadtxt(gt_path)
-            assert ((cor[:,0] < 0) | (cor[:,0] >= 1024)).sum() == 0, f'coor_x out of range {fname}'
-            assert ((cor[:,1] < 0) | (cor[:,1] >= 512)).sum() == 0, 'coor_y out of range'
-            assert (cor[0::2,0] != cor[1::2,0]).sum() == 0, 'ceiling-floor x inconsist'
-            assert (cor[::2,0][1:] - cor[::2,0][:-1] < 0).sum() == 0, 'format incorrect'
+            assert ((cor[:, 0] < 0) | (cor[:, 0] >= 1024)
+                    ).sum() == 0, f'coor_x out of range {fname}'
+            assert ((cor[:, 1] < 0) | (cor[:, 1] >= 512)
+                    ).sum() == 0, 'coor_y out of range'
+            assert (cor[0::2, 0] != cor[1::2, 0]).sum(
+            ) == 0, 'ceiling-floor x inconsist'
+            assert (cor[::2, 0][1:] - cor[::2, 0][:-1]
+                    < 0).sum() == 0, 'format incorrect'
 
     def __len__(self):
         return len(self.img_fnames)
@@ -60,7 +69,8 @@ class PanoCorBonDataset(data.Dataset):
         # Read ground truth corners
         with open(os.path.join(self.cor_dir,
                                self.txt_fnames[idx])) as f:
-            cor = np.array([line.strip().split() for line in f if line.strip()], np.float32)
+            cor = np.array([line.strip().split()
+                           for line in f if line.strip()], np.float32)
 
         # Stretch augmentation
         if self.stretch:
@@ -81,12 +91,12 @@ class PanoCorBonDataset(data.Dataset):
         bon = cor_2_1d(cor, H, W)
 
         # Prepare lrub and occ
-        corx = np.round(cor[::2,0])
+        corx = np.round(cor[::2, 0])
         xs = []
         lrub = []
         occ = []
         for i in range(len(corx)):
-            u, b = cor[[i*2,i*2+1], 1]
+            u, b = cor[[i*2, i*2+1], 1]
             if corx[i] == corx[i-1]:
                 lrub[-1][2] = u
                 lrub[-1][3] = b
@@ -99,7 +109,7 @@ class PanoCorBonDataset(data.Dataset):
         lrub = np.array(lrub)
         occ = np.array(occ)
         uidx = np.arange(W)
-        cdist = np.abs(uidx[:,None] - xs[None,:])
+        cdist = np.abs(uidx[:, None] - xs[None, :])
         cdist[cdist > W/2] = W - cdist[cdist > W/2]
         nnidx = cdist.argmin(1)
         lrub = lrub[nnidx].T
@@ -136,7 +146,7 @@ class PanoCorBonDataset(data.Dataset):
         uidx = np.arange(W)
         corx = np.round(np.unique(cor[:, 0])).astype(np.int32)
         corx = np.concatenate([corx, corx+W, corx-W])
-        dist = corx[:,None] - uidx[None,:]
+        dist = corx[:, None] - uidx[None, :]
         vot = dist[None, np.abs(dist).argmin(0), uidx]
 
         # Convert all data to tensor
@@ -168,8 +178,10 @@ def cor_2_1d(cor, H, W):
                                               z=50, w=W, h=H)
         bon_floor_x.extend(xys[:, 0])
         bon_floor_y.extend(xys[:, 1])
-    bon_ceil_x, bon_ceil_y = sort_xy_filter_unique(bon_ceil_x, bon_ceil_y, y_small_first=True)
-    bon_floor_x, bon_floor_y = sort_xy_filter_unique(bon_floor_x, bon_floor_y, y_small_first=False)
+    bon_ceil_x, bon_ceil_y = sort_xy_filter_unique(
+        bon_ceil_x, bon_ceil_y, y_small_first=True)
+    bon_floor_x, bon_floor_y = sort_xy_filter_unique(
+        bon_floor_x, bon_floor_y, y_small_first=False)
     bon = np.zeros((2, W))
     bon[0] = np.interp(np.arange(W), bon_ceil_x, bon_ceil_y, period=W)
     bon[1] = np.interp(np.arange(W), bon_floor_x, bon_floor_y, period=W)
@@ -298,7 +310,7 @@ if __name__ == '__main__':
     cmap = plt.get_cmap('bwr')
     for batch in tqdm(to_visualize):
         fname = os.path.split(batch['img_path'])[-1]
-        img = batch['x'].permute(1,2,0).numpy()
+        img = batch['x'].permute(1, 2, 0).numpy()
         y_bon = batch['bon'].numpy()
         y_bon = ((y_bon / np.pi + 0.5) * img.shape[0]).round().astype(int)
         img[y_bon[0], np.arange(len(y_bon[0])), 1] = 1
@@ -308,8 +320,7 @@ if __name__ == '__main__':
         img_vot = batch['vot'].repeat(30, 1).numpy()
         img_vot = (img_vot / args.dist_clip + 1) / 2
         vot_mask = (img_vot >= 0) & (img_vot <= 1)
-        img_vot = (cmap(img_vot)[...,:3] * 255).astype(np.uint8)
+        img_vot = (cmap(img_vot)[..., :3] * 255).astype(np.uint8)
         img_vot[~vot_mask] = 0
         out = np.concatenate([img_vot, img_pad, img], 0)
         Image.fromarray(out).save(os.path.join(args.out_dir, fname))
-

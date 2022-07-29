@@ -105,7 +105,7 @@ if __name__ == '__main__':
     # Parse args & config
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # parser.add_argument('--cfg', default="/media/NFS/kike/HoHoNet/config/mp3d_layout/HOHO_layout_aug_efficienthc_Transen1_resnet34.yaml")
-    parser.add_argument('--cfg', default="/media/NFS/kike/HoHoNet/config/mp3d_layout/mp3d_data.yaml")
+    parser.add_argument('--cfg', default="/media/NFS/kike/HoHoNet/config/mp3d_layout/mlc_mp3d_fpe.yaml")
 
     parser.add_argument('opts',
                         help='Modify config options using the command-line',

@@ -10,7 +10,32 @@ from lib.misc import panostretch
 
 
 class MLCDataset(data.Dataset):
-    def __init__(self) -> None:
+    def __init__(self, flag, root_dir):
+
+        self.root_dir = root_dir
+        self.flag = flag
+        if flag == 'train':
+            self.img_dir = os.path.join(root_dir, 'rgb')
+            self.label_dir = os.path.join(root_dir, 'label', 'median')
+            self.std_dir = os.path.join(root_dir, 'label', 'std')
+
+        elif flag == 'valid':
+            self.img_dir = os.path.join(root_dir, 'rgb')
+            self.label_dir = os.path.join(root_dir, 'label', 'gt')
+
+        else:
+            raise ValueError("No data registred for MLCDatatset")
+
+        self.img_fnames = sorted([
+            fname for fname in os.listdir(self.img_dir)
+            if fname.endswith('.jpg') or fname.endswith('.png')
+        ])
+
+    def __len__(self):
+        return len(self.img_fnames)
+
+    def __getitem__(self, idx):
+        # Read image
         pass
 
 

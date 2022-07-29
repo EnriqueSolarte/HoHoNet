@@ -13,6 +13,8 @@ from shapely.geometry import Polygon
 
 
 ''' Layout (per-column) estimation '''
+
+
 class LayoutEstimator(nn.Module):
     def __init__(self, emb_dim, bon_weight=1., cor_weight=1., bon_loss='l1', cor_loss='bce', bon_scale=1.,
                  init_weight=0.1, dropout=0., oneconv=True, last_ks=1, last_bias=True,
@@ -28,8 +30,10 @@ class LayoutEstimator(nn.Module):
         self.post_force_cuboid = post_force_cuboid
 
         if oneconv:
-            self.pred_bon = nn.Conv1d(emb_dim, 2, last_ks, padding=last_ks//2, bias=last_bias)
-            self.pred_cor = nn.Conv1d(emb_dim, 1, last_ks, padding=last_ks//2, bias=last_bias)
+            self.pred_bon = nn.Conv1d(
+                emb_dim, 2, last_ks, padding=last_ks//2, bias=last_bias)
+            self.pred_cor = nn.Conv1d(
+                emb_dim, 1, last_ks, padding=last_ks//2, bias=last_bias)
             if last_bias:
                 nn.init.constant_(self.pred_bon.bias[0], -0.478)
                 nn.init.constant_(self.pred_bon.bias[1], 0.425)
@@ -69,7 +73,7 @@ class LayoutEstimator(nn.Module):
         H, W = self.H, self.W
 
         y_bon_ = (pred_bon[0].cpu().numpy() / np.pi + 0.5) * H - 0.5
-        y_cor_ = pred_cor[0,0].sigmoid().cpu().numpy()
+        y_cor_ = pred_cor[0, 0].sigmoid().cpu().numpy()
         # Init floor/ceil plane
         z0 = 50
         _, z1 = post_proc.np_refine_by_fix_z(*y_bon_, z0)
@@ -90,7 +94,8 @@ class LayoutEstimator(nn.Module):
         xs_ = find_N_peaks(y_cor_, r=r, min_v=min_v, N=N)[0]
 
         # Generate wall-walls
-        cor, xy_cor = post_proc.gen_ww(xs_, y_bon_[0], z0, tol=abs(0.16 * z1 / 1.6), force_cuboid=self.post_force_cuboid)
+        cor, xy_cor = post_proc.gen_ww(xs_, y_bon_[0], z0, tol=abs(
+            0.16 * z1 / 1.6), force_cuboid=self.post_force_cuboid)
         if not self.post_force_cuboid:
             # Check valid (for fear self-intersection)
             xy2d = np.zeros((len(xy_cor), 2), np.float32)
@@ -104,10 +109,12 @@ class LayoutEstimator(nn.Module):
                     'Generate cuboid as fallback.',
                     file=sys.stderr)
                 xs_ = find_N_peaks(y_cor_, r=r, min_v=0, N=4)[0]
-                cor, xy_cor = post_proc.gen_ww(xs_, y_bon_[0], z0, tol=abs(0.16 * z1 / 1.6), force_cuboid=True)
+                cor, xy_cor = post_proc.gen_ww(
+                    xs_, y_bon_[0], z0, tol=abs(0.16 * z1 / 1.6), force_cuboid=True)
 
         # Expand with btn coory
-        cor = np.hstack([cor, post_proc.infer_coory(cor[:, 1], z1 - z0, z0)[:, None]])
+        cor = np.hstack([cor, post_proc.infer_coory(
+            cor[:, 1], z1 - z0, z0)[:, None]])
         # Collect corner position in equirectangular
         cor_id = np.zeros((len(cor)*2, 2), np.float32)
         for j in range(len(cor)):
@@ -133,20 +140,43 @@ class LayoutEstimator(nn.Module):
             raise NotImplementedError
 
         if self.cor_loss == 'bce':
-            losses['cor'] = F.binary_cross_entropy_with_logits(pred['cor'], gt_cor)
+            losses['cor'] = F.binary_cross_entropy_with_logits(
+                pred['cor'], gt_cor)
         elif self.cor_loss == 'prfocal':
             g, p = gt_cor, pred['cor']
             pos_mask = (g >= 1-1e-6)
             B, alpha, beta = len(g), 2, 4
             L_pos = -F.logsigmoid(p) * F.sigmoid(-p).pow(alpha)
-            L_neg = -F.logsigmoid(-p) * F.sigmoid(p).pow(alpha) * (1-g).pow(beta)
-            L = torch.where(pos_mask, L_pos, L_neg).view(B,-1).sum(-1) / pos_mask.float().view(B,-1).sum(-1)
+            L_neg = -F.logsigmoid(-p) * \
+                F.sigmoid(p).pow(alpha) * (1-g).pow(beta)
+            L = torch.where(pos_mask, L_pos, L_neg).view(
+                B, -1).sum(-1) / pos_mask.float().view(B, -1).sum(-1)
             losses['cor'] = L.mean()
         else:
             raise NotImplementedError
 
-        losses['total.layout'] = self.bon_weight * losses['bon'] + self.cor_weight * losses['cor']
+        losses['total.layout'] = self.bon_weight * \
+            losses['bon'] + self.cor_weight * losses['cor']
         with torch.no_grad():
             losses['bon.mae'] = F.l1_loss(pred['bon'], gt_bon) / self.bon_scale
             losses['cor.mae'] = F.l1_loss(pred['cor'].sigmoid(), gt_cor)
+        return losses
+
+    def compute_mlc_bon_losses(self, x_emb, batch):
+        
+        
+        gt_bon = batch['bon'] * self.bon_scale
+        std = batch['std']
+
+        # Forward
+        pred = self(x_emb)
+        pred_bon = pred['bon'] 
+        # Compute losses
+        losses = {}
+        losses['bon'] = F.l1_loss(pred_bon/std**2, gt_bon/std**2) 
+      
+
+        losses['total.layout'] = losses['bon']
+        with torch.no_grad():
+            losses['bon.mae'] = F.l1_loss(pred_bon/std**2, gt_bon/std**2) 
         return losses

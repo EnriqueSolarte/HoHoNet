@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../public_dataset/360Layout/mp3d"
+		},
+		{
+			"path": "../../../public_dataset/layoutnet_dataset"
+		},
+		{
+			"path": "../MP3D_360_FPE"
+		}
+	],
+	"settings": {
+		"jupyter.debugJustMyCode": false
+	}
+}

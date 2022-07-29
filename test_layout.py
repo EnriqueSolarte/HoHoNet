@@ -21,6 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--pth', help='path to load saved checkpoint.')
     parser.add_argument('--img_glob', required=True)
     parser.add_argument('--output_dir', required=True)
+    
     # Augmentation related
     parser.add_argument('--flip', action='store_true',
                         help='whether to perfome left-right flip. '
@@ -44,7 +45,7 @@ if __name__ == '__main__':
         exp_ckpt_root = os.path.join(config.ckpt_root, exp_id)
         args.pth = sorted(glob.glob(os.path.join(exp_ckpt_root, '*pth')))[-1]
         print(f'--pth is not given.  Auto infer the pth={args.pth}')
-    device = torch.device('cpu' if args.no_cuda else 'cuda')
+    device = torch.device('cpu' if args.no_cuda else 'cuda:0')
 
     # Prepare image to processed
     paths = sorted(glob.glob(args.img_glob))
@@ -57,7 +58,7 @@ if __name__ == '__main__':
     model_file = importlib.import_module(config.model.file)
     model_class = getattr(model_file, config.model.modelclass)
     net = model_class(**config.model.kwargs)
-    net.load_state_dict(torch.load(args.pth))
+    net.load_state_dict(torch.load(args.pth, map_location=device))
     net = net.to(device).eval()
 
     # Check target directory

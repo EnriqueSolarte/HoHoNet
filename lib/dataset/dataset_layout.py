@@ -10,10 +10,16 @@ from lib.misc import panostretch
 
 
 class MLCDataset(data.Dataset):
-    def __init__(self, flag, root_dir):
+    def __init__(self, flag, root_dir,
+                 sampling=None,
+                 flip=False, rotate=False, gamma=False):
 
+        self.flip = flip
+        self.rotate = rotate
+        self.gamma = gamma
         self.root_dir = root_dir
         self.flag = flag
+
         if flag == 'train':
             self.img_dir = os.path.join(root_dir, 'rgb')
             self.label_dir = os.path.join(root_dir, 'label', 'median')
@@ -22,6 +28,7 @@ class MLCDataset(data.Dataset):
         elif flag == 'valid':
             self.img_dir = os.path.join(root_dir, 'rgb')
             self.label_dir = os.path.join(root_dir, 'label', 'gt')
+            self.std_dir = None
 
         else:
             raise ValueError("No data registred for MLCDatatset")
@@ -31,12 +38,79 @@ class MLCDataset(data.Dataset):
             if fname.endswith('.jpg') or fname.endswith('.png')
         ])
 
+        if sampling != None:
+            self.img_fnames = sampling_by_room(
+                self.img_fnames, sampling
+            )
+            np.random.shuffle(self.img_fnames)
+            self.img_fnames = self.img_fnames[:sampling]
+            
+
     def __len__(self):
         return len(self.img_fnames)
 
     def __getitem__(self, idx):
-        # Read image
-        pass
+        # Read image and aggregated boundaries
+        img_path = os.path.join(self.img_dir,
+                                self.img_fnames[idx])
+        frame_name = os.path.splitext(self.img_fnames[idx])[0]
+        
+        img = np.array(Image.open(os.path.join(
+            self.img_dir,
+            self.img_fnames[idx]
+            )),
+                       np.float32)[..., :3] / 255.
+
+        bon = np.load(os.path.join(
+            self.label_dir,
+            frame_name + ".npy"
+            ), allow_pickle=True)
+                      
+        if self.std_dir is not None:
+            std = np.load(os.path.join(
+                self.std_dir, 
+                frame_name + ".npy"
+                ), allow_pickle=True)
+        else:
+            std = np.ones_like(bon)
+
+        # Random flip
+        if self.flip and np.random.randint(2) == 0:
+            img = np.flip(img, axis=1)
+            bon = np.flip(bon, axis=len(bon.shape) - 1)
+            std = np.flip(std, axis=len(bon.shape) - 1)
+
+        # Random horizontal rotate
+        if self.rotate:
+            dx = np.random.randint(img.shape[1])
+            img = np.roll(img, dx, axis=1)
+            bon = np.roll(bon, dx, axis=len(bon.shape) - 1)
+            std = np.roll(std, dx, axis=len(bon.shape) - 1)
+            
+
+        # Random gamma augmentation
+        if self.gamma:
+            p = np.random.uniform(1, 2)
+            if np.random.randint(2) == 0:
+                p = 1 / p
+            img = img**p
+
+        
+        assert bon.shape[
+            1] == 1024, f'[ERROR] bon {self.npy_fnames[idx]} should have shape (2, 1024) instead of {bon.shape}'
+
+         # Convert all data to tensor
+        out_dict = {
+            'x': torch.FloatTensor(img.transpose([2, 0, 1]).copy()),
+            'bon': torch.FloatTensor(bon.copy()),
+            'std': torch.FloatTensor(std.copy()),
+            'vot': torch.FloatTensor(std.copy()),
+            'lrub': torch.FloatTensor(std.copy()),
+            'occ': torch.FloatTensor(std.copy()),
+            'img_path': img_path
+        }
+
+        return out_dict
 
 
 class PanoCorBonDataset(data.Dataset):
@@ -282,6 +356,26 @@ def visualize_a_data(x, y_bon, y_cor):
     img_bon[y_bon[1], np.arange(len(y_bon[1])), 1] = 255
 
     return np.concatenate([gt_cor, img_pad, img_bon], 0)
+
+
+def sampling_by_room(list_files, number_samples=2000):
+    """
+    Samples the data by rooms allowing a min number of keyframes
+    """
+
+    MIN_FR_PER_ROOM = number_samples/list_files.__len__()
+
+    room_scenes = np.unique([os.path.split(f)[1].split("_")[0] + "_" +
+                             os.path.split(f)[1].split("_")[1] + "_" +
+                             os.path.split(f)[1].split("_")[2]
+                             for f in list_files])
+    new_list_files = []
+    for sc in room_scenes:
+        frm = [f for f in list_files if sc in f]
+        np.random.shuffle(frm)
+        new_list_files += frm[:int(MIN_FR_PER_ROOM * frm.__len__())]
+
+    return new_list_files
 
 
 if __name__ == '__main__':

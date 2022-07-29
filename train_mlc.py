@@ -27,7 +27,7 @@ def train_loop(net, loader, optimizer):
                 batch[k] = v.to(device)
 
         # feed forward & compute losses
-        losses = net.compute_losses(batch)
+        losses = net.compute_mlc_bon_losses(batch)
         if len(losses) == 0:
             continue
 
@@ -63,7 +63,7 @@ def valid_loop(net, loader):
                     batch[k] = v.to(device)
 
             # feed forward & compute losses
-            losses = net.compute_losses(batch)
+            losses = net.compute_mlc_bon_losses(batch)
 
             # Log
             for k, v in losses.items():
@@ -105,7 +105,8 @@ if __name__ == '__main__':
     # Parse args & config
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     # parser.add_argument('--cfg', default="/media/NFS/kike/HoHoNet/config/mp3d_layout/HOHO_layout_aug_efficienthc_Transen1_resnet34.yaml")
-    parser.add_argument('--cfg', default="/media/NFS/kike/HoHoNet/config/mp3d_layout/mlc_mp3d_fpe.yaml")
+    parser.add_argument('--cfg', default="/media/NFS/kike/HoHoNet/config/mp3d_layout/mlc_mp3d_fpe_retraining.yaml")
+    parser.add_argument('--pth', default='/media/NFS/kike/HoHoNet/ckpt/pretrained/ep300.pth')
 
     parser.add_argument('opts',
                         help='Modify config options using the command-line',
@@ -140,6 +141,9 @@ if __name__ == '__main__':
     model_file = importlib.import_module(config.model.file)
     model_class = getattr(model_file, config.model.modelclass)
     net = model_class(**config.model.kwargs).to(device)
+
+    net.load_state_dict(torch.load(args.pth, map_location=device))
+
     if config.training.fix_encoder_bn:
         apply_fn_based_on_key(net.encoder, ['bn'], lambda m: m.requires_grad_(False))
 
@@ -169,6 +173,11 @@ if __name__ == '__main__':
     # Start training
     for iep in trange(1, config.training.epoch + 1, position=0):
 
+        # Valid phase
+        epoch_losses = valid_loop(net, valid_loader)
+        print(f'EP[{iep}/{config.training.epoch}] valid:  ' +
+              ' \ '.join([f'{k} {v:.3f}' for k, v in epoch_losses.items()]))
+
         # Train phase
         epoch_losses = train_loop(net, train_loader, optimizer)
         scheduler.step()
@@ -180,8 +189,8 @@ if __name__ == '__main__':
             torch.save(net.state_dict(), os.path.join(exp_ckpt_root, f'ep{iep}.pth'))
             print('Model saved')
 
-        # Valid phase
-        epoch_losses = valid_loop(net, valid_loader)
-        print(f'EP[{iep}/{config.training.epoch}] valid:  ' +
-              ' \ '.join([f'{k} {v:.3f}' for k, v in epoch_losses.items()]))
+        # # Valid phase
+        # epoch_losses = valid_loop(net, valid_loader)
+        # print(f'EP[{iep}/{config.training.epoch}] valid:  ' +
+        #       ' \ '.join([f'{k} {v:.3f}' for k, v in epoch_losses.items()]))
 

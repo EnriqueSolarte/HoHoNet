@@ -11,16 +11,16 @@ dataset:
         flip: True
         rotate: True
         gamma: True
-        sampling: 2000
+        sampling: 1000
     valid_kwargs:
         flag: valid
         root_dir: /media/NFS/justin/retraining/mvl/pruned_test
 
 training:
-    epoch: 300
+    epoch: 10
     batch_size: 4
-    save_every: 10
-    optim_lr: 0.000001
+    save_every: 1
+    optim_lr: 0.00001
     optim_poly_gamma: 0.9
 
 model:

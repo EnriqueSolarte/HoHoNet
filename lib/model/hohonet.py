@@ -111,4 +111,10 @@ class HoHoNet(nn.Module):
         losses = self.call_modality('compute_losses', feat, batch=batch)
         losses['total'] = sum(v for k, v in losses.items() if k.startswith('total'))
         return losses
-
+    
+    def compute_mlc_bon_losses(self, batch):
+        feat = self.extract_feat(batch['x'])
+        losses = self.call_modality('compute_mlc_bon_losses', feat, batch=batch)
+        losses['total'] = sum(v for k, v in losses.items() if k.startswith('total'))
+        return losses
+    

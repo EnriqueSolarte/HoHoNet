@@ -1,6 +1,6 @@
 ckpt_root: ckpt
 cuda: True
-gpu: 0
+gpu: 1
 num_workers: 8
 
 dataset:
@@ -11,16 +11,16 @@ dataset:
         flip: True
         rotate: True
         gamma: True
-        sampling: 1000
+        sampling: 2000
     valid_kwargs:
         flag: valid
         root_dir: /media/NFS/justin/retraining/mvl/pruned_test
 
 training:
     epoch: 10
-    batch_size: 4
+    batch_size: 5
     save_every: 1
-    optim_lr: 0.001
+    optim_lr: 0.0001
     optim_poly_gamma: 0.9
 
 model:

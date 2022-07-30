@@ -71,7 +71,6 @@ class LayoutEstimator(nn.Module):
         pred_bon = pred['bon'] / self.bon_scale
         pred_cor = pred['cor']
         H, W = self.H, self.W
-
         y_bon_ = (pred_bon[0].cpu().numpy() / np.pi + 0.5) * H - 0.5
         y_cor_ = pred_cor[0, 0].sigmoid().cpu().numpy()
         # Init floor/ceil plane

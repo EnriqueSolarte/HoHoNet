@@ -4,13 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "../../../public_dataset/360Layout/mp3d"
+			"path": "../../justin/retraining/mvl"
 		},
 		{
-			"path": "../../../public_dataset/layoutnet_dataset"
-		},
-		{
-			"path": "../MP3D_360_FPE"
+			"path": "../RETRAINING_LY/neurips_rebuttal_train"
 		}
 	],
 	"settings": {

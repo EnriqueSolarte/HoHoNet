@@ -1,6 +1,6 @@
 ckpt_root: ckpt
 cuda: True
-gpu: 1
+gpu: 2
 num_workers: 8
 
 dataset:
@@ -20,7 +20,7 @@ training:
     epoch: 10
     batch_size: 5
     save_every: 1
-    optim_lr: 0.0001
+    optim_lr: 0.00005
     optim_poly_gamma: 0.9
 
 model:

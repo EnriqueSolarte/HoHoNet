@@ -146,6 +146,8 @@ if __name__ == '__main__':
         os.makedirs(args.output_dir, exist_ok=True)
     
     output_exp = os.path.join(args.output_dir, str(args.exp))
+    if os.path.exists(output_exp):
+        shutil.rmtree(output_exp, ignore_errors=True)
     os.makedirs(os.path.join(output_exp, 'log'), exist_ok=True)
     os.makedirs(os.path.join(output_exp, 'ckpt'), exist_ok=True)
     
@@ -221,9 +223,9 @@ if __name__ == '__main__':
         print(f'EP[{iep}/{config.training.epoch}] valid:  ' +
               ' \ '.join([f'{k} {np.mean(v):.4f}' for k, v in eval_metric.items()]))
 
-        [tb_writer.add_scalar("valid/{k}", v, iep)
+        [tb_writer.add_scalar(f"valid/{k}", v, iep)
          for k, v in epoch_losses.items()]
-        [tb_writer.add_scalar("valid/{k}", np.mean(v), iep)
+        [tb_writer.add_scalar(f"valid/{k}", np.mean(v), iep)
          for k, v in eval_metric.items()]
 
         current_2d_iou = np.mean(eval_metric['2DIoU'])
@@ -249,7 +251,7 @@ if __name__ == '__main__':
         print(f'EP[{iep}/{config.training.epoch}] train:  ' +
               ' \ '.join([f'{k} {v:.3f}' for k, v in epoch_losses.items()]))
 
-        [tb_writer.add_scalar("train/{k}", v, iep)
+        [tb_writer.add_scalar(f"train/{k}", v, iep)
          for k, v in epoch_losses.items()]
 
         tb_writer.add_scalar("train/lr", scheduler.get_last_lr()[0], iep)

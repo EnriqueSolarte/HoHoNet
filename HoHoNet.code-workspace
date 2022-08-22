@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../RETRAINING_LY/neurips_rebuttal_train"
+		},
+		{
+			"path": "../RETRAINING_LY/datasets/mlc/neurips_rebuttal"
 		}
 	],
 	"settings": {

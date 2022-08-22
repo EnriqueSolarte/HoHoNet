@@ -32,7 +32,7 @@ if __name__ == '__main__':
         '--pth_ref', default='/media/NFS/kike/HoHoNet/ckpt/pretrained/ep300.pth')
     # parser.add_argument('--pth', default='/media/NFS/kike/HoHoNet/ckpt/mp3d_layout_mlc_mp3d_fpe_retraining/ep70.pth')
     parser.add_argument(
-        '--pth', default='/media/NFS/kike/HoHoNet/ckpt/fine_tuning_ly_mlc_1e3_0.9/ep10.pth')
+        '--pth', default='/media/NFS/kike/RETRAINING_LY/neurips_rebuttal_train/HoHoNet/best_model/ckpt/best_2d_iou.pth')
 
     # parser.add_argument('--img_glob', default='/media/NFS/kike/HoHoNet/assets/28.png')
     parser.add_argument(
@@ -95,7 +95,7 @@ if __name__ == '__main__':
             img_ori = np.array(img_pil)[..., :3].transpose([2, 0, 1]).copy()
             x = torch.FloatTensor([img_ori / 255]).to(device)
 
-            colors = dict(mlc_test=(255, 0, 255), pre_trained=(0, 255, 0))
+            colors = dict(mlc_the_best=(255, 0, 255), pre_trained=(0, 255, 0))
             img = imread(i_path)
             
             bounds_pred = {}
